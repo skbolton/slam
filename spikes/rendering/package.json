@@ -1,0 +1,9 @@
+{
+  "name": "@slam/spike-rendering",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node run-checks.mjs && zsh -f ./tty-check.zsh",
+    "demo": "node render-spike.mjs"
+  }
+}

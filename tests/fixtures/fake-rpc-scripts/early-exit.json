@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "wait-for-stdin",
+    "match": { "type": "prompt" },
+    "respond": { "type": "response", "command": "prompt", "success": true, "id": "req-1" }
+  },
+  { "kind": "exit", "code": 0 }
+]

@@ -1,0 +1,19 @@
+{
+  "name": "@slam/spike-rpc-lifecycle",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Characterization spike for the one-process-per-message Pi RPC architecture.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "scripts": {
+    "spike:lifecycle": "node --experimental-strip-types --no-warnings src/deterministic-lifecycle.ts",
+    "spike:fragmentation": "node --experimental-strip-types --no-warnings src/fragmentation-checks.ts",
+    "spike:protocol-edges": "node --experimental-strip-types --no-warnings src/protocol-edge-checks.ts",
+    "spike:abort": "node --experimental-strip-types --no-warnings src/abort-check.ts",
+    "spike:live-pi": "node --experimental-strip-types --no-warnings src/live-pi-smoke.ts",
+    "spike:all": "node --experimental-strip-types --no-warnings src/run-all.ts",
+    "check": "npm run spike:all"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@slam/spike-session-concurrency",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node run-checks.mjs"
+  }
+}

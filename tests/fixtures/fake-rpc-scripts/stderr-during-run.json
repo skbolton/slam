@@ -1,0 +1,13 @@
+[
+  { "kind": "write-stderr", "text": "warning: stray diagnostic line\n" },
+  { "kind": "write-stderr", "text": "info: another diagnostic line\n" },
+  {
+    "kind": "wait-for-stdin",
+    "match": { "type": "prompt" },
+    "respond": { "type": "response", "command": "prompt", "success": true, "id": "req-1" }
+  },
+  { "kind": "write", "record": { "type": "agent_start" } },
+  { "kind": "write", "record": { "type": "agent_end", "willRetry": false } },
+  { "kind": "write", "record": { "type": "agent_settled" } },
+  { "kind": "exit", "code": 0 }
+]

@@ -1,0 +1,32 @@
+{
+	"name": "slam",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Shell-native AI coding agent frontend",
+	"type": "module",
+	"engines": {
+		"node": ">=22.19.0"
+	},
+	"scripts": {
+		"build": "node scripts/generate-build-info.mjs && tsc -p tsconfig.build.json",
+		"clean": "rm -rf dist coverage",
+		"format": "node scripts/biome.mjs format --write .",
+		"format:check": "node scripts/biome.mjs format .",
+		"lint": "node scripts/biome.mjs lint .",
+		"typecheck": "tsc --noEmit",
+		"test": "npm run test:unit && npm run test:integration",
+		"test:unit": "vitest run tests/unit --passWithNoTests",
+		"test:integration": "vitest run tests/integration --passWithNoTests",
+		"test:live": "vitest run tests/live --passWithNoTests",
+		"check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.4",
+		"@types/node": "22.19.19",
+		"typescript": "5.9.3",
+		"vitest": "4.1.9"
+	},
+	"dependencies": {
+		"@earendil-works/pi-coding-agent": "0.82.0"
+	}
+}

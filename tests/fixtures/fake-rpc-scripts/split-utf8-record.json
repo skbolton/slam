@@ -1,0 +1,15 @@
+[
+  {
+    "kind": "write-fragmented",
+    "record": {
+      "type": "message_update",
+      "assistantMessageEvent": {
+        "type": "text_delta",
+        "contentIndex": 0,
+        "delta": "split \u2028 unicode \u2029 separators"
+      }
+    },
+    "sizes": [12, 17, 21, 9]
+  },
+  { "kind": "exit", "code": 0 }
+]

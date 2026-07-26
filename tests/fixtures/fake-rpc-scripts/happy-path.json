@@ -1,0 +1,22 @@
+[
+  {
+    "kind": "wait-for-stdin",
+    "match": { "type": "prompt" },
+    "respond": { "type": "response", "command": "prompt", "success": true, "id": "req-1" }
+  },
+  { "kind": "write", "record": { "type": "agent_start" } },
+  { "kind": "write", "record": { "type": "turn_start" } },
+  { "kind": "write", "record": { "type": "message_start", "message": { "role": "assistant", "content": [] } } },
+  {
+    "kind": "write",
+    "record": {
+      "type": "message_update",
+      "assistantMessageEvent": { "type": "text_delta", "contentIndex": 0, "delta": "Hello from fixture." }
+    }
+  },
+  { "kind": "write", "record": { "type": "message_end", "message": { "role": "assistant" } } },
+  { "kind": "write", "record": { "type": "turn_end" } },
+  { "kind": "write", "record": { "type": "agent_end", "messages": [], "willRetry": false } },
+  { "kind": "write", "record": { "type": "agent_settled" } },
+  { "kind": "exit", "code": 0 }
+]
