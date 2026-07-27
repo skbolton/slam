@@ -14,6 +14,7 @@ typeset -g SLAM_PROVIDER=${SLAM_PROVIDER:-}
 typeset -g SLAM_MODEL=${SLAM_MODEL:-}
 typeset -g SLAM_THINKING_LEVEL=${SLAM_THINKING_LEVEL:-}
 typeset -g SLAM_MODEL_PENDING=${SLAM_MODEL_PENDING:-0}
+typeset -g SLAM_THINKING_VISIBLE=${SLAM_THINKING_VISIBLE:-1}
 
 _slam_not_implemented() {
   print -r -- 'slam: implementation is not available yet' >&2
@@ -39,15 +40,22 @@ _slam_send_message() {
   state_file=$(command mktemp "${TMPDIR:-/tmp}/slam-state.XXXXXXXX") || return 1
   command chmod 600 -- $state_file || { command rm -f -- $state_file; return 1; }
 
-  local -x SLAM_STATE_FILE=$state_file
-  local -x SLAM_SESSION_ID=$SLAM_SESSION_ID
-  local -x SLAM_SESSION_FILE=$SLAM_SESSION_FILE
-  local -x SLAM_PROVIDER=$SLAM_PROVIDER
-  local -x SLAM_MODEL=$SLAM_MODEL
   if [[ -t 0 && -t 1 ]]; then
-    "$SLAM_BIN" message -- "$message" </dev/tty >/dev/tty
+    SLAM_STATE_FILE=$state_file \
+    SLAM_SESSION_ID=$SLAM_SESSION_ID \
+    SLAM_SESSION_FILE=$SLAM_SESSION_FILE \
+    SLAM_PROVIDER=$SLAM_PROVIDER \
+    SLAM_MODEL=$SLAM_MODEL \
+    SLAM_THINKING_VISIBLE=$SLAM_THINKING_VISIBLE \
+      "$SLAM_BIN" message -- "$message" </dev/tty >/dev/tty
   else
-    "$SLAM_BIN" message -- "$message"
+    SLAM_STATE_FILE=$state_file \
+    SLAM_SESSION_ID=$SLAM_SESSION_ID \
+    SLAM_SESSION_FILE=$SLAM_SESSION_FILE \
+    SLAM_PROVIDER=$SLAM_PROVIDER \
+    SLAM_MODEL=$SLAM_MODEL \
+    SLAM_THINKING_VISIBLE=$SLAM_THINKING_VISIBLE \
+      "$SLAM_BIN" message -- "$message"
   fi
   local result=$?
   if (( result == 0 || result == 130 )) && [[ -s $state_file ]]; then
@@ -137,6 +145,29 @@ function :new {
   SLAM_THINKING_LEVEL=''
 }
 
+function :thinking {
+  emulate -L zsh
+  if (( $# == 0 )); then
+    if (( SLAM_THINKING_VISIBLE )); then
+      SLAM_THINKING_VISIBLE=0
+    else
+      SLAM_THINKING_VISIBLE=1
+    fi
+  elif (( $# == 1 )); then
+    case $1 in
+      on) SLAM_THINKING_VISIBLE=1 ;;
+      off) SLAM_THINKING_VISIBLE=0 ;;
+      *) print -r -- 'usage: :thinking [on|off]' >&2; return 2 ;;
+    esac
+  else
+    print -r -- 'usage: :thinking [on|off]' >&2
+    return 2
+  fi
+  local state=off
+  (( SLAM_THINKING_VISIBLE )) && state=on
+  print -r -- "Thinking display: $state"
+}
+
 function :name {
   emulate -L zsh
   (( $# > 0 )) || { print -r -- 'usage: :name <name>' >&2; return 2; }
@@ -189,6 +220,7 @@ function :info {
   SLAM_MODEL=$SLAM_MODEL \
   SLAM_THINKING_LEVEL=$SLAM_THINKING_LEVEL \
   SLAM_MODEL_PENDING=$SLAM_MODEL_PENDING \
+  SLAM_THINKING_VISIBLE=$SLAM_THINKING_VISIBLE \
     "$SLAM_BIN" info
 }
 

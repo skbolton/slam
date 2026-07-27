@@ -46,6 +46,81 @@ describe("Bat renderer", () => {
 		}
 	});
 
+	it("uses non-Markdown syntax without Markdown table buffering", async () => {
+		const directory = mkdtempSync(join(tmpdir(), "slam-bat-test-"));
+		try {
+			const log = join(directory, "log");
+			const fake = join(directory, "bat");
+			writeFileSync(fake, `#!/bin/sh\nprintf '%s\\n' "$*" > ${JSON.stringify(log)}\ncat >> ${JSON.stringify(log)}\n`, {
+				mode: 0o700,
+			});
+			const renderer = new BatRenderer(fake, undefined, "js");
+			await renderer.write("| a | long |\n| --- | --- |\n| x | y |\n");
+			await renderer.end();
+
+			expect(readFileSync(log, "utf8")).toBe(
+				"--language=js --paging=never --color=always --style=plain\n| a | long |\n| --- | --- |\n| x | y |\n",
+			);
+		} finally {
+			rmSync(directory, { recursive: true, force: true });
+		}
+	});
+
+	it("buffers and aligns Markdown tables split across stream chunks", async () => {
+		const directory = mkdtempSync(join(tmpdir(), "slam-bat-test-"));
+		try {
+			const rendered = join(directory, "rendered");
+			const fake = join(directory, "bat");
+			writeFileSync(fake, `#!/bin/sh\ncat > ${JSON.stringify(rendered)}\n`, { mode: 0o700 });
+			const renderer = new BatRenderer(fake);
+			await renderer.write("Before\n| Name | Quan");
+			await renderer.write("tity |\n| :--- | ---: |\n| apples | 2 |\n");
+			await renderer.write("| fig | 100 |\n\nAfter\n");
+			await renderer.end();
+
+			expect(readFileSync(rendered, "utf8")).toBe(
+				"Before\n| Name   | Quantity |\n| :----- | -------: |\n| apples |        2 |\n| fig    |      100 |\n\nAfter\n",
+			);
+		} finally {
+			rmSync(directory, { recursive: true, force: true });
+		}
+	});
+
+	it("preserves escaped pipes and delimiter alignment markers", async () => {
+		const directory = mkdtempSync(join(tmpdir(), "slam-bat-test-"));
+		try {
+			const rendered = join(directory, "rendered");
+			const fake = join(directory, "bat");
+			writeFileSync(fake, `#!/bin/sh\ncat > ${JSON.stringify(rendered)}\n`, { mode: 0o700 });
+			const renderer = new BatRenderer(fake);
+			await renderer.write("A | B | C\n:--- | :---: | ---:\nx\\|y | middle | z\n");
+			await renderer.end();
+
+			expect(readFileSync(rendered, "utf8")).toBe(
+				"| A    |   B    |    C |\n| :--- | :----: | ---: |\n| x\\|y | middle |    z |\n",
+			);
+		} finally {
+			rmSync(directory, { recursive: true, force: true });
+		}
+	});
+
+	it("does not format table-like text inside fenced code blocks", async () => {
+		const directory = mkdtempSync(join(tmpdir(), "slam-bat-test-"));
+		try {
+			const rendered = join(directory, "rendered");
+			const fake = join(directory, "bat");
+			writeFileSync(fake, `#!/bin/sh\ncat > ${JSON.stringify(rendered)}\n`, { mode: 0o700 });
+			const markdown = "```markdown\n| a | long |\n| --- | --- |\n| x | y |\n```\n";
+			const renderer = new BatRenderer(fake);
+			await renderer.write(markdown);
+			await renderer.end();
+
+			expect(readFileSync(rendered, "utf8")).toBe(markdown);
+		} finally {
+			rmSync(directory, { recursive: true, force: true });
+		}
+	});
+
 	it("reports Bat startup failure", async () => {
 		const renderer = new BatRenderer("/missing/bat");
 		await expect(renderer.write("text")).rejects.toThrow("ENOENT");

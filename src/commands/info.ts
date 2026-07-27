@@ -22,5 +22,6 @@ export function infoCommand(env: NodeJS.ProcessEnv, shellCwd: string): void {
 		lines.push(`Model: ${env.SLAM_PROVIDER ?? ""}/${env.SLAM_MODEL ?? ""}${pending ? " (pending)" : ""}`);
 	}
 	if (attached) lines.push(`Thinking: ${env.SLAM_THINKING_LEVEL ?? ""}`);
+	lines.push(`Thinking display: ${env.SLAM_THINKING_VISIBLE === "1" ? "on" : "off"}`);
 	process.stdout.write(`${lines.join("\n")}\n`);
 }

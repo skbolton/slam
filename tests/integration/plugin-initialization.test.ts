@@ -36,9 +36,10 @@ describe("plugin initialization", () => {
 		const output = run(`
       source "$1"
       SLAM_ACTIVE=1
-      zsh -f -c 'print -r -- "\${SLAM_ACTIVE-unset}"'
+			SLAM_THINKING_VISIBLE=1
+			zsh -f -c 'print -r -- "\${SLAM_ACTIVE-unset}:\${SLAM_THINKING_VISIBLE-unset}"'
     `);
-		expect(output).toBe("unset\n");
+		expect(output).toBe("unset:unset\n");
 	});
 
 	it("preserves builtin colon behavior", () => {
@@ -55,8 +56,8 @@ describe("plugin initialization", () => {
 		const output = run(`
       setopt nounset
       source "$1"
-      print -r -- "$SLAM_ACTIVE:$SLAM_SESSION_ID:$SLAM_SESSION_NAME:$SLAM_SESSION_FILE:$SLAM_SESSION_CWD:$SLAM_PROVIDER:$SLAM_MODEL:$SLAM_THINKING_LEVEL:$SLAM_MODEL_PENDING"
-    `);
-		expect(output).toBe("0::::::::0\n");
+			print -r -- "$SLAM_ACTIVE:$SLAM_SESSION_ID:$SLAM_SESSION_NAME:$SLAM_SESSION_FILE:$SLAM_SESSION_CWD:$SLAM_PROVIDER:$SLAM_MODEL:$SLAM_THINKING_LEVEL:$SLAM_MODEL_PENDING:$SLAM_THINKING_VISIBLE"
+		`);
+		expect(output).toBe("0::::::::0:1\n");
 	});
 });

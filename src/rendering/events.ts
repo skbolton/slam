@@ -1,10 +1,17 @@
 import type { RpcEvent } from "../pi/protocol.ts";
 
-export function presentEvent(event: RpcEvent, write: (text: string) => void): void {
+export interface ToolSource {
+	readonly language: "bash" | "python";
+	readonly text: string;
+}
+
+export function presentEvent(event: RpcEvent, write: (text: string) => void): ToolSource | undefined {
 	switch (event.type) {
-		case "tool_execution_start":
-			write(`→ ${string(event.toolName)}${argumentSummary(event.args)}\n`);
-			break;
+		case "tool_execution_start": {
+			const source = toolSource(event.toolName, event.args);
+			write(` ${string(event.toolName)}${source ? "" : argumentSummary(event.args)}\n`);
+			return source;
+		}
 		case "tool_execution_end":
 			write(
 				`${event.isError === true ? "✗" : "✓"} ${string(event.toolName)}${event.isError === true ? errorSummary(event.result) : ""}\n`,
@@ -24,6 +31,21 @@ export function presentEvent(event: RpcEvent, write: (text: string) => void): vo
 			}
 			break;
 	}
+	return undefined;
+}
+
+function toolSource(toolName: unknown, value: unknown): ToolSource | undefined {
+	if (!value || typeof value !== "object") return undefined;
+	const args = value as Record<string, unknown>;
+	const name = String(toolName).toLowerCase();
+	if (["bash", "shell", "sh"].includes(name) && typeof args.command === "string") {
+		return { language: "bash", text: args.command };
+	}
+	if (["python", "python3"].includes(name)) {
+		const source = args.code ?? args.script ?? args.command;
+		if (typeof source === "string") return { language: "python", text: source };
+	}
+	return undefined;
 }
 
 function argumentSummary(value: unknown): string {

@@ -5,6 +5,7 @@ import { sessionProcessOptions, verifiedAttachment, type ShellAttachment } from 
 import { encodeShellState, type ShellState } from "../shell/state-record.ts";
 import { BatRenderer } from "../rendering/bat.ts";
 import { presentEvent } from "../rendering/events.ts";
+import { AssistantMessageRenderer } from "../rendering/message.ts";
 import { handleExtensionDialog } from "../ui/extensions.ts";
 
 export interface MessageCommandOptions {
@@ -25,7 +26,7 @@ export async function messageCommand(options: MessageCommandOptions): Promise<nu
 		}),
 	);
 	const controller = new AbortController();
-	let renderer: BatRenderer | undefined;
+	let renderer: AssistantMessageRenderer | undefined;
 	let renderChain = Promise.resolve();
 	const interrupt = () => controller.abort();
 	globalThis.process.once("SIGINT", interrupt);
@@ -37,22 +38,32 @@ export async function messageCommand(options: MessageCommandOptions): Promise<nu
 					if (["select", "confirm", "input", "editor"].includes(String(event.method))) {
 						renderChain = renderChain.then(() => handleExtensionDialog(event, process.dispatcher, options.env));
 					} else {
-						presentEvent(event, (text) => globalThis.process.stderr.write(text));
+						renderChain = renderChain.then(() => presentEventWithSource(event, options.env));
 					}
 					return;
 				}
-				presentEvent(event, (text) => globalThis.process.stderr.write(text));
 				if (event.type === "message_start") {
 					const message = event.message as { role?: string } | undefined;
-					if (message?.role === "assistant") renderer = new BatRenderer(required(options.env.SLAM_BAT, "SLAM_BAT"));
+					if (message?.role === "assistant") {
+						renderer = new AssistantMessageRenderer(
+							(language) => new BatRenderer(required(options.env.SLAM_BAT, "SLAM_BAT"), undefined, language),
+							options.env.SLAM_THINKING_VISIBLE === "1",
+						);
+					}
 				}
 				if (event.type === "message_update") {
 					const delta = event.assistantMessageEvent as { type?: string; delta?: string } | undefined;
-					if (delta?.type === "text_delta" && typeof delta.delta === "string") {
-						renderChain = renderChain.then(() => renderer?.write(delta.delta ?? ""));
-					}
+					const current = renderer;
+					if (delta && current) renderChain = renderChain.then(() => current.write(delta));
 				}
-				if (event.type === "message_end") renderChain = renderChain.then(() => renderer?.end());
+				if (event.type === "message_end") {
+					const current = renderer;
+					renderer = undefined;
+					if (current) renderChain = renderChain.then(() => current.end());
+				}
+				if (!["message_start", "message_update", "message_end"].includes(event.type)) {
+					renderChain = renderChain.then(() => presentEventWithSource(event, options.env));
+				}
 			},
 		});
 		await renderChain;
@@ -70,6 +81,17 @@ export async function messageCommand(options: MessageCommandOptions): Promise<nu
 	} finally {
 		globalThis.process.off("SIGINT", interrupt);
 	}
+}
+
+async function presentEventWithSource(
+	event: Parameters<typeof presentEvent>[0],
+	env: NodeJS.ProcessEnv,
+): Promise<void> {
+	const source = presentEvent(event, (text) => globalThis.process.stderr.write(text));
+	if (!source) return;
+	const renderer = new BatRenderer(required(env.SLAM_BAT, "SLAM_BAT"), undefined, source.language);
+	await renderer.write(source.text);
+	await renderer.end();
 }
 
 function attachmentFromEnvironment(env: NodeJS.ProcessEnv): ShellAttachment {

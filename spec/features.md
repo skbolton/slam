@@ -222,9 +222,10 @@ SLAM_PROVIDER
 SLAM_MODEL
 SLAM_THINKING_LEVEL
 SLAM_MODEL_PENDING
+SLAM_THINKING_VISIBLE
 ```
 
-All parameters exist as soon as the plugin is sourced. Unavailable textual values are empty strings. `SLAM_ACTIVE` and `SLAM_MODEL_PENDING` use `1` and `0`.
+All parameters exist as soon as the plugin is sourced. Unavailable textual values are empty strings. `SLAM_ACTIVE`, `SLAM_MODEL_PENDING`, and `SLAM_THINKING_VISIBLE` use `1` and `0`.
 
 They are not exported, so a child shell does not accidentally inherit the parent's attachment.
 
@@ -254,11 +255,20 @@ Raw protocol messages, diagnostics, and tool events never enter the assistant Ma
 Tool execution is visible without reproducing a full TUI. Slam prints concise lifecycle lines such as:
 
 ```text
-→ bash: npm test
+ bash
+```
+
+```bash
+npm test
+```
+
+```text
 ✓ bash
-→ edit: src/parser.ts
+ edit: src/parser.ts
 ✗ edit: permission denied
 ```
+
+Bash and Python tool source is sent directly to a separate Bat process with the corresponding language, so it receives syntax highlighting without Markdown code fences. Other tools retain a compact argument summary.
 
 The exact styling may improve later, but the initial behavior communicates:
 
@@ -275,7 +285,9 @@ Provider retries and session compaction produce concise status messages when the
 
 ### Thinking content
 
-Thinking content is hidden in the first release. A future command may expose or toggle thinking behavior.
+Thinking content is visible by default. `:thinking` toggles its visibility, while `:thinking on` and `:thinking off` set it explicitly. The setting is local to the current shell and does not change the model's thinking level.
+
+When visible, thinking streams through Bat inside a JavaScript multiline comment. `/* ` is prepended to the first line and ` */` is appended to the final line, preserving vertical space while letting the user's Bat theme render the whole block with comment styling. Thinking is rendered separately from Markdown assistant text.
 
 ## Interactive agent requests
 
@@ -365,9 +377,9 @@ Specific third-party Zsh plugin managers are not part of the initial compatibili
 
 The following ideas are intentionally outside the first release but fit the product direction discussed so far:
 
-- A `:thinking` control for thinking visibility or level
+- Controls for changing the model's thinking level
 - Prompt-state fields for token usage, cost, or context consumption
-- More polished and configurable tool-call styling
+- Configurable tool-call icons and styling
 - Image and attachment input
 - Steering or follow-up messages while an agent is already running
 - Session compaction controls

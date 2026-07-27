@@ -8,6 +8,17 @@ describe(":info output", () => {
 			infoCommand({ SLAM_ACTIVE: "0", SLAM_MODEL_PENDING: "1", SLAM_PROVIDER: "p", SLAM_MODEL: "m" }, "/shell");
 			expect(String(write.mock.calls[0]?.[0])).toContain("Session: unattached");
 			expect(String(write.mock.calls[0]?.[0])).toContain("Model: p/m (pending)");
+			expect(String(write.mock.calls[0]?.[0])).toContain("Thinking display: off");
+		} finally {
+			write.mockRestore();
+		}
+	});
+
+	it("reports thinking visibility", () => {
+		const write = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+		try {
+			infoCommand({ SLAM_ACTIVE: "0", SLAM_THINKING_VISIBLE: "1" }, "/shell");
+			expect(String(write.mock.calls[0]?.[0])).toContain("Thinking display: on");
 		} finally {
 			write.mockRestore();
 		}
