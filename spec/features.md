@@ -227,7 +227,15 @@ SLAM_THINKING_VISIBLE
 
 All parameters exist as soon as the plugin is sourced. Unavailable textual values are empty strings. `SLAM_ACTIVE`, `SLAM_MODEL_PENDING`, and `SLAM_THINKING_VISIBLE` use `1` and `0`.
 
-They are not exported, so a child shell does not accidentally inherit the parent's attachment.
+`SLAM_PROVIDER` and `SLAM_MODEL` are exported so external prompt programs such as Starship can read them. Session identity and attachment parameters are not exported, so a child shell cannot accidentally inherit the parent's attachment. A child shell may inherit the model/provider display values without being attached.
+
+For Starship, an environment-variable module can display the current model:
+
+```toml
+[env_var.SLAM_MODEL]
+variable = 'SLAM_MODEL'
+format = '[$env_value]($style) '
+```
 
 Example prompt component:
 

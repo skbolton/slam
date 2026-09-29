@@ -95,7 +95,7 @@ describe("colon message contract", () => {
 				[
 					"-f",
 					"-c",
-					'source "$1"; _slam_send_message first; _slam_send_message second; print -r -- "$SLAM_SESSION_ID:$SLAM_SESSION_FILE"',
+					`source "$1"; _slam_send_message first; _slam_send_message second; print -r -- "$SLAM_SESSION_ID:$SLAM_SESSION_FILE"; zsh -f -c 'print -r -- "$SLAM_PROVIDER:$SLAM_MODEL:\${SLAM_SESSION_ID-unset}:\${SLAM_SESSION_FILE-unset}"'`,
 					"_",
 					plugin,
 				],
@@ -103,7 +103,7 @@ describe("colon message contract", () => {
 			);
 
 			expect(readFileSync(captured, "utf8")).toBe(`\t\nsession-one\t${sessionFile}\n`);
-			expect(output).toBe(`session-one:${sessionFile}\n`);
+			expect(output).toBe(`session-one:${sessionFile}\nprovider:model:unset:unset\n`);
 		} finally {
 			rmSync(directory, { recursive: true, force: true });
 		}
